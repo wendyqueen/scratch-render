@@ -133,6 +133,10 @@ class Skin extends EventEmitter {
         return this._uniforms;
     }
 
+    emitWasAltered () {
+        this.emit(Skin.Events.WasAltered);
+    }
+
     /**
      * If the skin defers silhouette operations until the last possible minute,
      * this will be called before isTouching uses the silhouette.

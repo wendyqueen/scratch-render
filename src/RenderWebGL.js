@@ -3,6 +3,8 @@ const EventEmitter = require('events');
 const hull = require('hull.js');
 const twgl = require('twgl.js');
 
+const SVGRenderer = require('scratch-svg-renderer');
+const Skin = require('./Skin');
 const BitmapSkin = require('./BitmapSkin');
 const Drawable = require('./Drawable');
 const Rectangle = require('./Rectangle');
@@ -12,6 +14,7 @@ const ShaderManager = require('./ShaderManager');
 const SVGSkin = require('./SVGSkin');
 const TextBubbleSkin = require('./TextBubbleSkin');
 const EffectTransform = require('./EffectTransform');
+const CanvasMeasurementProvider = require('./util/canvas-measurement-provider');
 const log = require('./util/log');
 
 const __isTouchingDrawablesPoint = twgl.v3.create();
@@ -222,6 +225,22 @@ class RenderWebGL extends EventEmitter {
         /** @todo disable when no partial transparency? */
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+        /**
+         * Export internals for third-party extensions.
+         */
+        this.exports = {
+            twgl,
+            SVGRenderer,
+            Drawable,
+            Skin,
+            BitmapSkin,
+            TextBubbleSkin,
+            PenSkin,
+            SVGSkin,
+            CanvasMeasurementProvider,
+            Rectangle
+        };
     }
 
     /**
