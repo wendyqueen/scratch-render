@@ -90,6 +90,15 @@ const colorMatches = (a, b, offset) => (
  */
 const FENCE_WIDTH = 15;
 
+// Loading text wrapper takes a while because of some of its dependencies, so only do so when needed.
+let _TextWrapper;
+const lazilyLoadTextWrapper = () => {
+    if (!_TextWrapper) {
+        // eslint-disable-next-line global-require
+        _TextWrapper = require('./util/text-wrapper');
+    }
+    return _TextWrapper;
+};
 
 class RenderWebGL extends EventEmitter {
     /**
@@ -508,6 +517,14 @@ class RenderWebGL extends EventEmitter {
         drawable.skin = null;
 
         return drawableID;
+    }
+
+    /**
+     * @param {CanvasMeasurementProvider} measurementProvider helper for measuring text
+     * @returns {TextWrapper} an instance of TextWrapper
+     */
+    createTextWrapper (measurementProvider) {
+        return new (lazilyLoadTextWrapper())(measurementProvider);
     }
 
     /**
