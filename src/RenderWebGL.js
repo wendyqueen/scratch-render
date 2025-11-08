@@ -222,6 +222,22 @@ class RenderWebGL extends EventEmitter {
         // Don't set this directly-- use setBackgroundColor so it stays in sync with _backgroundColor4f
         this._backgroundColor3b = new Uint8ClampedArray(3);
 
+        /**
+         * Element that contains all overlays.
+         * @type {HTMLElement}
+         */
+        this.overlayContainer = document.createElement('div');
+        this.overlayContainer.style.position = 'absolute';
+        this.overlayContainer.style.top = '0';
+        this.overlayContainer.style.left = '0';
+        this.overlayContainer.style.pointerEvents = 'none';
+        this.overlayContainer.style.overflow = 'hidden';
+
+        /**
+         * @type {Array<{container: HTMLElement; userElement: HTMLElement; mode: string;}>}
+         */
+        this._overlays = [];
+
         this._createGeometry();
 
         this.on(RenderConstants.Events.NativeSizeChanged, this.onNativeSizeChanged);
@@ -360,6 +376,71 @@ class RenderWebGL extends EventEmitter {
     _setNativeSize (width, height) {
         this._nativeSize = [width, height];
         this.emit(RenderConstants.Events.NativeSizeChanged, {newSize: this._nativeSize});
+    }
+
+    /**
+     * @param {HTMLElement} element HTML element
+     * @param {string} mode Resize mode
+     * @returns {*} Internal overlay object
+     */
+    addOverlay (element, mode = 'scale') {
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.appendChild(element);
+        this.overlayContainer.appendChild(container);
+        const overlay = {
+            container,
+            userElement: element,
+            mode
+        };
+        this._overlays.push(overlay);
+        this._updateOverlays();
+        return overlay;
+    }
+
+    /**
+     * @param {HTMLElement} element HTML element
+     */
+    removeOverlay (element) {
+        const overlayIndex = this._overlays.findIndex(i => i.userElement === element);
+        if (overlayIndex !== -1) {
+            this._overlays[overlayIndex].container.remove();
+            this._overlays.splice(overlayIndex, 1);
+        }
+    }
+
+    _updateOverlays () {
+        const [nativeWidth, nativeHeight] = this._nativeSize;
+        const dpiIndependentWidth = this.canvas.width / window.devicePixelRatio;
+        const dpiIndependentHeight = this.canvas.height / window.devicePixelRatio;
+
+        this.overlayContainer.style.width = `${dpiIndependentWidth}px`;
+        this.overlayContainer.style.height = `${dpiIndependentHeight}px`;
+
+        for (const overlay of this._overlays) {
+            const container = overlay.container;
+            if (overlay.mode === 'scale' || overlay.mode === 'scale-centered') {
+                const xScale = dpiIndependentWidth / nativeWidth;
+                const yScale = dpiIndependentHeight / nativeHeight;
+                container.style.width = `${nativeWidth}px`;
+                container.style.height = `${nativeHeight}px`;
+
+                const scale = `scale(${xScale}, ${yScale})`;
+                container.style.transformOrigin = 'top left';
+                if (overlay.mode === 'scale') {
+                    container.style.transform = scale;
+                } else {
+                    const shiftToCenter = `translate(${nativeWidth / 2}px, ${nativeHeight / 2}px)`;
+                    container.style.transform = `${scale} ${shiftToCenter}`;
+                }
+            } else {
+                container.style.transform = '';
+                container.style.width = '100%';
+                container.style.height = '100%';
+            }
+        }
     }
 
     /**
