@@ -299,6 +299,9 @@ class RenderWebGL extends EventEmitter {
         if (canvas.width !== newWidth || canvas.height !== newHeight) {
             canvas.width = newWidth;
             canvas.height = newHeight;
+
+            this._updateOverlays();
+
             // Resizing the canvas causes it to be cleared, so redraw it.
             this.draw();
         }
@@ -375,6 +378,7 @@ class RenderWebGL extends EventEmitter {
      */
     _setNativeSize (width, height) {
         this._nativeSize = [width, height];
+        this._updateOverlays();
         this.emit(RenderConstants.Events.NativeSizeChanged, {newSize: this._nativeSize});
     }
 
